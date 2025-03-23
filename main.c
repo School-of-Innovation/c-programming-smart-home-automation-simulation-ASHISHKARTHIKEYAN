@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>//I used rand function to assign values for the temperatures, Beacause nothing is mentioned in the instruction about, how the values are assigned for temp
 #define MAX_ROOMS 5  //  max number of rooms
