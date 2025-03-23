@@ -1,169 +1,214 @@
-#include <stdio.h>
 
-#define MAX_ROOMS 5 // Maximum number of rooms allowed
-#define AUTO_LOCK_THRESHOLD 5 // Auto-lock after 5 consecutive inputs without motion
+
+#include <stdio.h>
+#include <stdlib.h>//I used rand function to assign values for the temperatures, Beacause nothing is mentioned in the instruction about, how the values are assigned for temp
+#define MAX_ROOMS 5  //  max number of rooms
 
 // Function prototypes
-void initializeSystem(int rooms, int lights[], int temps[], int motion[], int locks[]);
+void initializeSystem();
 void displayMenu();
-void controlLights(int rooms, int lights[], int *lightCounter);
-void readTemperature(int rooms, int temps[]);
-void detectMotion(int rooms, int motion[], int *motionCounter, int locks[]);
-void securitySystem(int rooms, int locks[]);
-void analyzeHouseStatus(int rooms, int lights[], int temps[], int motion[], int locks[]);
-void checkEnergySaving(int rooms, int lights[]);
+void controlLights();
+void readTemperature();
+void detectMotion();
+void securitySystem();
+void analyzeHouseStatus();
 
 int main() {
+    
+    int allon=1;//for checking all lights are ON
+    int cycle[1]={0};// For counting iterations
     int rooms;
-    printf("Enter number of rooms (1-%d): ", MAX_ROOMS);
-    scanf("%d", &rooms);
-    if (rooms < 1 || rooms > MAX_ROOMS) {
-        printf("Invalid number of rooms. Exiting...\n");
+    printf("Enter number of rooms:");
+    scanf("%d",&rooms);
+    if(rooms<=0 || rooms>MAX_ROOMS){
+        printf("Enter valid no of rooms");
         return 1;
     }
+    int light[rooms],door[rooms],motion[rooms],temp[rooms];
+    initializeSystem(light,door,motion,temp,rooms);
 
-    int lights[rooms], temps[rooms], motion[rooms], locks[rooms];
-    int motionCounter = 0, lightCounter = 0;
-    initializeSystem(rooms, lights, temps, motion, locks);
+    int choice=0;
+    do
+    {
+            displayMenu();
+            printf("Enter your choice :");
+            scanf("%d",&choice);
+            if(choice<=0 || choice >6){
+                printf("Enter valid choice\n");
+                return 1;
+            }
+            switch (choice){
+                case 1:
+                controlLights(rooms,light,cycle,allon);
+                break;
+                case 2:
+                readTemperature(rooms,temp);
+                break;
+                case 3:
+                detectMotion(rooms,motion);
+                break;
+                case 4:
+                securitySystem(rooms,door,motion,cycle);
+                break;
+                case 5:
+                analyzeHouseStatus(rooms, light, temp, motion, door);
+                break;
+                default:
+                case 6:
+                printf("Exiting...\n");
+                break;
+                printf("\nEnter a valid choice\n");
+            }
+            
+         ++cycle[0];
+    } while (choice!=6);
 
-    int choice;
-    do {
-        displayMenu();
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-        
-        switch (choice) {
-            case 1: controlLights(rooms, lights, &lightCounter); break;
-            case 2: readTemperature(rooms, temps); break;
-            case 3: detectMotion(rooms, motion, &motionCounter, locks); break;
-            case 4: securitySystem(rooms, locks); break;
-            case 5: analyzeHouseStatus(rooms, lights, temps, motion, locks); break;
-            case 6: printf("Exiting...\n"); break;
-            default: printf("Invalid choice, please try again.\n");
-        }
-        
-        checkEnergySaving(rooms, lights);
-    } while (choice != 6);
-    
+
     return 0;
 }
 
-void initializeSystem(int rooms, int lights[], int temps[], int motion[], int locks[]) {
-    for (int i = 0; i < rooms; i++) {
-        lights[i] = 0;      // All lights OFF
-        temps[i] = 22;      // Default temperature (22°C)
-        motion[i] = 0;      // No motion detected
-        locks[i] = 1;       // Doors locked
-    }
-    printf("System initialized. All lights OFF, doors locked, no motion detected.\n");
+ 
+void initializeSystem(int light[], int door[], int motion[],int temp[], int rooms) {
+    printf("\nInitializing system...\n");
+    int L=20,M=35; //For generating random values for temperature
+    for (int i=0;i<rooms;i++){
+        light[i]=0;
+        door[i]=0;
+        motion[i]=0;
+        temp[i]=rand()%(M-L + 1)+L;
+    } 
 }
 
 void displayMenu() {
-    printf("\n===== Smart Home Menu =====\n");
-    printf("1. Toggle Light\n");
-    printf("2. Read Temperature\n");
-    printf("3. Check Motion Sensor\n");
-    printf("4. Lock/Unlock Security System\n");
-    printf("5. House Status Summary\n");
-    printf("6. Exit\n");
+    printf("\n===== Smart Home Menu ====\n\n1.Toggle Light\n2.Read Temperature\n3.Check Motion Sensor\n4.Lock/Unlock Security System\n5.House Status Summary\n6.Exit\n");
+    
 }
+void controlLights(int rooms, int light[],int cycle[],int allon) {
+        
+    //For Additional Challenge
+    for (int i=0;i<rooms;i++){
+        allon = allon && light[i];
+    }
 
-void controlLights(int rooms, int lights[], int *lightCounter) {
-    int room;
-    printf("Enter room number to toggle light (1-%d): ", rooms);
-    scanf("%d", &room);
-    if (room < 1 || room > rooms) {
-        printf("Invalid room number.\n");
+    if(allon == 1 && cycle[0]>=5){
+        printf("\n\nAll lights are ON for too long, consider turning them OFF\n\n");
+        cycle[0]=0;
+    }
+
+    int room_no;
+    printf("Enter room number to toggle light(%d-%d):",1,rooms);
+    scanf("%d",&room_no);
+    if(room_no<=0 || room_no>rooms){
+        printf("Enter valid room number");
         return;
     }
-    lights[room - 1] = !lights[room - 1];
-    printf("Light in Room %d is now %s.\n", room, lights[room - 1] ? "ON" : "OFF");
-    (*lightCounter)++;
-}
+    if(light[room_no-1] == 0){
+        light[room_no-1]=1;}
+    else{
+        light[room_no-1]=0;
+    }
 
-void readTemperature(int rooms, int temps[]) {
-    int room;
-    printf("Enter room number to read temperature (1-%d): ", rooms);
-    scanf("%d", &room);
-    if (room < 1 || room > rooms) {
-        printf("Invalid room number.\n");
+
+    if(light[room_no-1]==1){
+        printf("Light in Room %d is ON\n\n",room_no);}
+    else{
+        printf("Light in Room %d is OFF\n\n",room_no);
+    }
+
+
+}
+void readTemperature(int rooms, int temp[]) {
+    printf("Temperature status :\n\n");
+    for(int i=0;i<rooms;i++){
+        printf("Temperature in Room %d is %d°C\n",i+1,temp[i]);
+        //For Additional challenge
+        if(temp[i]>30){
+            printf("(Warning temperature in room %d is above 30°C)\n\n",i+1);
+        }
+    }
+}
+void detectMotion(int rooms, int motion[]) {//The instruction says 'Check if any motion is detected' and not told the users to update it. Thats why i made the code like this(motion detection is 0 always)
+    printf("Motion Sensors Status:\n");
+    for(int i=0;i<rooms;i++){
+        if(motion[i]==0){
+            printf("No Motion Detected in Room %d\n",i+1);
+        }
+        else{
+            printf("Motion Detected in Room \n%d",i+1);
+        }
+    }
+
+}
+void securitySystem(int rooms, int door[],int motion[],int cycle[]) {
+    int doorno;
+    int status;
+    printf("\nEnter the Room number to lock or unlock the door(1-%d):",rooms);
+    scanf("%d",&doorno);
+    if(doorno<=0 || doorno>rooms){
+        printf("\nEnter valid number");
         return;
     }
-    printf("Temperature in Room %d: %d°C\n", room, temps[room - 1]);
-    if (temps[room - 1] > 30) {
-        printf("Warning: High temperature detected in Room %d!\n", room);
-    }
-}
-
-void detectMotion(int rooms, int motion[], int *motionCounter, int locks[]) {
-    int detected = 0;
-    for (int i = 0; i < rooms; i++) {
-        if (motion[i]) {
-            printf("Motion detected in Room %d!\n", i + 1);
-            detected = 1;
-        }
-    }
-    if (!detected) {
-        printf("No motion detected in any room.\n");
-        (*motionCounter)++;
-    } else {
-        *motionCounter = 0;
-    }
-    
-    if (*motionCounter >= AUTO_LOCK_THRESHOLD) {
-        for (int i = 0; i < rooms; i++) {
-            locks[i] = 1;
-        }
-        printf("Auto-Lock activated: All doors are now locked due to inactivity.\n");
-        *motionCounter = 0;
-    }
-}
-
-void securitySystem(int rooms, int locks[]) {
-    int room;
-    printf("Enter room number to lock/unlock (1-%d): ", rooms);
-    scanf("%d", &room);
-    if (room < 1 || room > rooms) {
-        printf("Invalid room number.\n");
+    printf("\nLock or Unlock the door (1/0) :");
+    scanf("%d",&status);
+    if(status!=1 && status!=0){
+        printf("\nEnter valid number");
         return;
     }
-    locks[room - 1] = !locks[room - 1];
-    printf("Room %d is now %s.\n", room, locks[room - 1] ? "Locked" : "Unlocked");
+    if(status==1){
+        door[doorno-1]=1;
+        printf("\nThe door of room %d is unlocked.\n",doorno);
+    }
+    else{
+        door[doorno-1]=0;
+        printf("\nThe door of room %d is locked.\n",doorno);
+    }
+    //Additional Challenge
+
+    if(cycle[0]>=5){
+        for(int i=0;i<rooms;i++){
+            int nomotion=1;
+            nomotion=nomotion && (motion[i]^1);
+            if(nomotion==1){
+                if(door[i]==1){
+                    printf("\nSince, no motion is detected in room %d for 5 inputs the door is now locked automatically.\n",i+1);
+                    door[i]=0;
+                    cycle[0]=0;
+                }
+
+            }
+        }
+        
+    }
+}
+void analyzeHouseStatus(int rooms, int light[], int temp[], int motion[], int door[]) {
+
+printf("\nHouse Status:\n");
+for(int i=0;i<rooms;i++){
+    printf("Room %d : ",i+1);
+    if(light[i]==0){
+        printf("Light OFF,");
+    }
+    else if(light[i]==1){
+        printf("Light ON,");
+    }
+    printf("Temp %d°C,",temp[i]);
+
+    if(motion[i]==0){
+        printf("No motion,");
+
+    }
+    else if(motion[i]==1){
+        printf("Motion Detected,");
+    }
+
+    if(door[i]==0){
+        printf("Locked\n");
+
+    }
+    else if(door[i]==1){
+        printf("Unlocked\n");
+    }
 }
 
-void analyzeHouseStatus(int rooms, int lights[], int temps[], int motion[], int locks[]) {
-    printf("\nHouse Status:\n");
-    for (int i = 0; i < rooms; i++) {
-        printf("Room %d: Light %s, Temp %d°C, %s, %s\n", i + 1, 
-               lights[i] ? "ON" : "OFF", temps[i],
-               motion[i] ? "Motion Detected" : "No Motion", 
-               locks[i] ? "Locked" : "Unlocked");
-    }
 }
 
-void checkEnergySaving(int rooms, int lights[]) {
-    int allLightsOn = 1;
-    for (int i = 0; i < rooms; i++) {
-        if (!lights[i]) {
-            allLightsOn = 0;
-            break;
-        }
-    }
-    if (allLightsOn) {
-        printf("Energy Saving Mode: All lights have been ON for a while. Consider turning them OFF.\n");
-    }
-    
-    // Auto-Lock Feature
-    static int motionCounter = 0;
-    if (++motionCounter >= AUTO_LOCK_THRESHOLD) {
-        printf("Auto-Lock activated: All doors are now locked due to inactivity.\n");
-        motionCounter = 0;
-    }
-    
-    // Temperature Alert Feature
-    for (int i = 0; i < rooms; i++) {
-        if (temps[i] > 30) {
-            printf("Warning: High temperature detected in Room %d!\n", i + 1);
-        }
-    }
-}
